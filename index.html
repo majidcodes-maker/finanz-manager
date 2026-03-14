@@ -167,6 +167,30 @@
 
     .hidden { display:none; }
     .empty-state { font-size:13px; color:var(--text-secondary); padding:4px 0; }
+
+    /* MONTH INPUT */
+    .month-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; margin-top:12px; }
+    @media(max-width:480px){ .month-row{grid-template-columns:1fr 1fr;} }
+    select { width:100%; padding:9px 12px; border:0.5px solid var(--border-strong); border-radius:var(--radius-md); font-size:15px; background:var(--bg-secondary); color:var(--text); outline:none; cursor:pointer; }
+    select:focus { border-color:var(--purple); box-shadow:0 0 0 3px rgba(83,74,183,0.12); }
+    .input-error { font-size:12px; color:var(--red); margin-top:6px; min-height:16px; }
+
+    /* CHARTS */
+    .chart-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:12px; }
+    @media(max-width:560px){ .chart-grid{grid-template-columns:1fr;} }
+    .chart-card { background:var(--bg); border:0.5px solid var(--border); border-radius:var(--radius-lg); padding:1rem 1.25rem; }
+    .chart-title { font-size:13px; font-weight:500; color:var(--text-secondary); margin-bottom:12px; }
+    .chart-wrap { position:relative; height:200px; }
+    .chart-wrap-tall { position:relative; height:240px; }
+
+    /* HISTORY TABLE */
+    .history-table { width:100%; border-collapse:collapse; font-size:13px; }
+    .history-table th { font-size:11px; font-weight:600; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.05em; padding:6px 8px; border-bottom:0.5px solid var(--border); text-align:left; }
+    .history-table td { padding:9px 8px; border-bottom:0.5px solid var(--border); vertical-align:middle; }
+    .history-table tr:last-child td { border-bottom:none; }
+    .ts-main { font-size:13px; color:var(--text); }
+    .ts-sub { font-size:11px; color:var(--text-secondary); }
+
     .motivation-box { border-radius:var(--radius-lg); padding:1.25rem 1.5rem; margin-bottom:12px; border-left:3px solid var(--purple); background:var(--bg); border-top:0.5px solid var(--border); border-right:0.5px solid var(--border); border-bottom:0.5px solid var(--border); position:relative; overflow:hidden; }
     .motivation-box.good { border-left-color:var(--green-bar); }
     .motivation-box.warn { border-left-color:var(--amber-bar); }
@@ -175,6 +199,7 @@
     .motivation-author { font-size:12px; color:var(--text-secondary); font-weight:500; }
     .motivation-emoji { font-size:28px; position:absolute; right:1.25rem; top:50%; transform:translateY(-50%); opacity:0.15; }
   </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -253,8 +278,32 @@
           <input type="number" id="expenses" placeholder="z.B. 1800" min="0" />
         </div>
       </div>
-      <div class="btn-row">
-        <button class="btn-primary" onclick="calculate()">Auswerten ↗</button>
+      <div class="month-row" style="margin-top:12px;">
+        <div class="input-group" style="margin-bottom:0">
+          <label>Monat (optional)</label>
+          <select id="sel-month">
+            <option value="">— Aktueller Monat</option>
+            <option value="1">Januar</option><option value="2">Februar</option>
+            <option value="3">März</option><option value="4">April</option>
+            <option value="5">Mai</option><option value="6">Juni</option>
+            <option value="7">Juli</option><option value="8">August</option>
+            <option value="9">September</option><option value="10">Oktober</option>
+            <option value="11">November</option><option value="12">Dezember</option>
+          </select>
+        </div>
+        <div class="input-group" style="margin-bottom:0">
+          <label>Jahr (optional)</label>
+          <select id="sel-year">
+            <option value="">— Aktuelles Jahr</option>
+          </select>
+        </div>
+        <div class="input-group" style="margin-bottom:0">
+          <label>&nbsp;</label>
+          <button class="btn-primary" onclick="calculate()" style="height:40px;margin-top:0">Auswerten ↗</button>
+        </div>
+      </div>
+      <div class="input-error" id="date-error"></div>
+      <div class="btn-row" style="margin-top:8px;">
         <button class="btn-undo" id="undo-btn" onclick="undoLast()" disabled>↩ Rückgängig</button>
         <span class="toast" id="toast"></span>
         <span class="saving-ind" id="saving-ind">☁️ Gespeichert</span>
@@ -303,8 +352,24 @@
         <div class="motivation-author" id="motivation-author"></div>
         <div class="motivation-emoji" id="motivation-emoji"></div>
       </div>
+      <div class="section-title">Statistiken</div>
+      <div class="chart-grid">
+        <div class="chart-card">
+          <div class="chart-title">Ausgaben vs. Sparen vs. Investieren</div>
+          <div class="chart-wrap"><canvas id="chart-pie"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Ausgaben-Verlauf (%)</div>
+          <div class="chart-wrap"><canvas id="chart-spend"></canvas></div>
+        </div>
+      </div>
+      <div class="chart-card" style="margin-bottom:12px;">
+        <div class="chart-title">Einkommen vs. Ausgaben (€)</div>
+        <div class="chart-wrap-tall"><canvas id="chart-bar"></canvas></div>
+      </div>
+
       <div class="section-title">Verlauf</div>
-      <div class="card">
+      <div class="card" style="overflow-x:auto;">
         <div id="history-list"><div class="empty-state">Noch keine Einträge.</div></div>
       </div>
     </div>
@@ -479,6 +544,7 @@ window.showApp = () => {
     document.getElementById('topbar-av').classList.add('admin-av');
   }
   renderUI();
+  initYearSelect();
 };
 
 function showAuth() {
@@ -631,15 +697,34 @@ function renderUI() {
   document.getElementById('ansehen-desc').textContent=t.desc;
   document.getElementById('xp-bar').style.width=xpPct+'%';
   document.getElementById('xp-label').textContent=_totalXP+' Ansehen';
-  document.getElementById('history-list').innerHTML=_history.map((h,i)=>`
-    <div class="history-row">
-      <span style="color:var(--text-secondary)">${h.label}</span>
-      <span>${fmt(h.income)} / ${fmt(h.expenses)}</span>
-      <span class="badge badge-${h.status} hide-mobile">${h.statusText}</span>
-      <span class="hide-mobile" style="font-size:12px;color:var(--purple);font-weight:500;">+${h.earned} ✦</span>
-      <span style="color:var(--text-secondary);font-size:12px;">${h.spendPct}%|${h.savePct}%</span>
-      <button class="del-btn" onclick="deleteEntry(${i})">✕</button>
-    </div>`).join('');
+  const list = document.getElementById('history-list');
+  list.innerHTML = `<table class="history-table">
+    <thead><tr>
+      <th>Zeitraum</th>
+      <th>Auswertung</th>
+      <th>Einkommen</th>
+      <th>Ausgaben</th>
+      <th>Verfügbar</th>
+      <th>Status</th>
+      <th>Ansehen</th>
+      <th></th>
+    </tr></thead>
+    <tbody>` +
+  _history.map((h,i) => `<tr>
+    <td>
+      <div class="ts-main">${h.periodLabel || h.label}</div>
+      <div class="ts-sub">${h.submittedAt ? 'Eingabe: '+h.submittedAt : ''}</div>
+    </td>
+    <td><span style="font-size:12px;color:var(--text-secondary)">${h.spendPct}% | ${h.savePct}% | ${h.investPct}%</span></td>
+    <td>${fmt(h.income)}</td>
+    <td>${fmt(h.expenses)}</td>
+    <td style="color:${h.remaining>=0?'var(--green)':'var(--red)'}">${fmt(h.remaining)}</td>
+    <td><span class="badge badge-${h.status}">${h.statusText}</span></td>
+    <td style="font-size:12px;color:var(--purple);font-weight:500;">+${h.earned} ✦</td>
+    <td><button class="del-btn" onclick="deleteEntry(${i})">✕</button></td>
+  </tr>`).join('') +
+  `</tbody></table>`;
+  setTimeout(renderCharts, 50);
 }
 
 function showToast(msg) {
@@ -650,69 +735,259 @@ function showToast(msg) {
 
 
 // ── QUOTES ──
+// Stufen: perfect | great | good | okay | warning | bad | critical
 const QUOTES = {
-  good: [
-    { q: "Der Preis des Erfolgs ist Disziplin, harte Arbeit und Hingabe an das, was du tust.", a: "Vince Lombardi" },
-    { q: "Spare einen Teil von allem, was du verdienst. Zehn Prozent sind nicht zu viel.", a: "George S. Clason" },
-    { q: "Investiere in dich selbst. Dein Wissen zahlt die besten Zinsen.", a: "Benjamin Franklin" },
-    { q: "Wer spart, hat. Wer hat, gewinnt.", a: "Deutsches Sprichwort" },
-    { q: "Der Weg zum Reichtum liegt darin, wenn du willst, Geld zu verdienen, und wenn du es verdient hast, es zu behalten.", a: "Benjamin Franklin" },
-    { q: "Finanzielle Freiheit ist nicht daran gebunden, wie viel du verdienst, sondern wie viel du behältst.", a: "Robert Kiyosaki" },
-    { q: "Kaufe nicht, was du willst. Kaufe, was du brauchst.", a: "Warren Buffett" },
-    { q: "Exzellente Disziplin beim Sparen ist der erste Schritt zu finanziellem Wohlstand.", a: "Suze Orman" },
-    { q: "Die Gewohnheit zu sparen ist selbst eine Erziehung; sie fördert jeden Wert der Sparsamkeit, Ordnung und Planung.", a: "T.T. Munger" },
-    { q: "Großartig! Deine Finanzen sind auf dem richtigen Weg. Bleib konsequent.", a: "Finanz-Manager" }
-  ],
-  warn: [
-    { q: "Jeder Experte war einmal ein Anfänger. Bleib dran.", a: "Helen Hayes" },
-    { q: "Ein Budget sagt uns, was wir uns nicht leisten können, aber es hält uns nicht davon ab, es zu kaufen.", a: "William Feather" },
-    { q: "Es ist nicht dein Gehalt, das dich reich macht. Es sind deine Ausgabegewohnheiten.", a: "Charles A. Jaffe" },
-    { q: "Der größte Feind eines guten Plans ist der Traum vom perfekten Plan.", a: "Carl von Clausewitz" },
-    { q: "Kleine Fortschritte summieren sich zu großen Ergebnissen. Mach weiter.", a: "Finanz-Manager" },
-    { q: "Wer morgen Großes erreichen will, muss heute mit kleinen Schritten beginnen.", a: "Konfuzius" },
-    { q: "Du bist auf dem richtigen Weg. Versuche, deine Ausgaben etwas zu reduzieren.", a: "Finanz-Manager" },
-    { q: "Reichtum ist die Fähigkeit, das wahre Leben zu genießen.", a: "Henry David Thoreau" }
-  ],
-  bad: [
-    { q: "Scheitern ist lehrreich. Jeder der es einmal versucht hat und aufgegeben hat, ist nicht gescheitert – der hat nur aufgehört.", a: "Henry Ford" },
-    { q: "Der Unterschied zwischen einem erfolgreichen Menschen und anderen ist nicht mangelnde Stärke oder Wissen, sondern mangelnder Wille.", a: "Vince Lombardi" },
-    { q: "Wenn du dir kein gutes Leben leisten kannst, kannst du dir auch keinen schlechten Finanzplan leisten.", a: "Warren Buffett" },
-    { q: "Überprüfe deine Ausgaben. Kleine Lecks senken ein großes Schiff.", a: "Benjamin Franklin" },
-    { q: "Der erste Schritt aus dem Loch: Hör auf zu graben.", a: "Warren Buffett" },
-    { q: "Wer nicht spart, wird immer Sklave derer sein, die es tun.", a: "Afrikanisches Sprichwort" },
-    { q: "Schulden sind wie ein Schneeball: Je länger er rollt, desto größer wird er.", a: "Charles Dickens" },
-    { q: "Erkenne die Situation. Jetzt ist die beste Zeit, etwas zu ändern.", a: "Finanz-Manager" }
-  ]
+  perfect: {
+    emoji: '🏆', borderClass: 'good',
+    label: 'Ausgezeichnet — Du lebst die 70/20/10 Regel perfekt!',
+    pool: [
+      { q: "Finanzielle Freiheit ist nicht daran gebunden, wie viel du verdienst, sondern wie viel du behältst.", a: "Robert Kiyosaki" },
+      { q: "Wer spart hat. Wer hat, kann investieren. Wer investiert, gewinnt.", a: "Warren Buffett" },
+      { q: "Der Zinseszins ist das achte Weltwunder. Wer ihn versteht, verdient ihn; wer ihn nicht versteht, zahlt ihn.", a: "Albert Einstein" },
+      { q: "Du bist auf dem Niveau der besten Finanzplaner der Welt. Weiter so!", a: "Finanz-Manager" },
+      { q: "Reichtum entsteht nicht durch das, was du verdienst, sondern durch das, was du nicht ausgibst.", a: "Henry David Thoreau" }
+    ]
+  },
+  great: {
+    emoji: '⭐', borderClass: 'good',
+    label: 'Sehr gut — Fast perfekte Finanzplanung!',
+    pool: [
+      { q: "Kaufe nicht, was du willst. Kaufe, was du brauchst.", a: "Warren Buffett" },
+      { q: "Investiere in dich selbst. Dein Wissen zahlt die besten Zinsen.", a: "Benjamin Franklin" },
+      { q: "Die Gewohnheit zu sparen ist selbst eine Erziehung; sie fördert Sparsamkeit, Ordnung und Planung.", a: "T.T. Munger" },
+      { q: "Du zeigst echte Finanzdisziplin. Das ist seltener als du denkst.", a: "Finanz-Manager" },
+      { q: "Spare einen Teil von allem, was du verdienst. Zehn Prozent sind nicht zu viel.", a: "George S. Clason" }
+    ]
+  },
+  good: {
+    emoji: '✅', borderClass: 'good',
+    label: 'Gut — Solide Finanzen, kleiner Spielraum nach oben.',
+    pool: [
+      { q: "Exzellente Disziplin beim Sparen ist der erste Schritt zu finanziellem Wohlstand.", a: "Suze Orman" },
+      { q: "Der Preis des Erfolgs ist Disziplin, harte Arbeit und Hingabe.", a: "Vince Lombardi" },
+      { q: "Du machst das gut. Kleine Verbesserungen beim Sparen können großes bewirken.", a: "Finanz-Manager" },
+      { q: "Es ist nicht dein Gehalt, das dich reich macht. Es sind deine Ausgabegewohnheiten.", a: "Charles A. Jaffe" },
+      { q: "Der Weg zum Reichtum: Geld verdienen und es behalten.", a: "Benjamin Franklin" }
+    ]
+  },
+  okay: {
+    emoji: '📊', borderClass: 'warn',
+    label: 'Okay — Du bist stabil, aber Sparpotenzial liegt brach.',
+    pool: [
+      { q: "Ein Budget sagt uns, was wir uns nicht leisten können — aber es hält uns nicht davon ab, es zu kaufen.", a: "William Feather" },
+      { q: "Kleine Fortschritte summieren sich zu großen Ergebnissen. Bleib dran.", a: "Finanz-Manager" },
+      { q: "Wer morgen Großes erreichen will, muss heute mit kleinen Schritten beginnen.", a: "Konfuzius" },
+      { q: "Reichtum ist das Ergebnis von Gewohnheiten, nicht von Glück.", a: "Dave Ramsey" },
+      { q: "Du bist nicht schlecht aufgestellt — aber da ist noch Luft nach oben.", a: "Finanz-Manager" }
+    ]
+  },
+  warning: {
+    emoji: '⚠️', borderClass: 'warn',
+    label: 'Achtung — Deine Ausgaben sind zu hoch. Zeit zu handeln.',
+    pool: [
+      { q: "Der größte Feind eines guten Plans ist der Traum vom perfekten Plan. Fang jetzt an.", a: "Carl von Clausewitz" },
+      { q: "Jeder Experte war einmal ein Anfänger. Der Unterschied: Er hat nicht aufgehört.", a: "Helen Hayes" },
+      { q: "Überprüfe deine Ausgaben. Kleine Lecks senken ein großes Schiff.", a: "Benjamin Franklin" },
+      { q: "Du gibst zu viel aus. Finde die 3 größten Posten und reduziere sie.", a: "Finanz-Manager" },
+      { q: "Reichtum ist die Fähigkeit, das wahre Leben zu genießen — nicht, alles sofort zu kaufen.", a: "Henry David Thoreau" }
+    ]
+  },
+  bad: {
+    emoji: '🔄', borderClass: 'bad',
+    label: 'Kritisch — Deine Finanzen brauchen dringend Aufmerksamkeit.',
+    pool: [
+      { q: "Der erste Schritt aus dem Loch: Hör auf zu graben.", a: "Warren Buffett" },
+      { q: "Wer nicht spart, wird immer abhängig von denen sein, die es tun.", a: "Afrikanisches Sprichwort" },
+      { q: "Der Unterschied zwischen Erfolg und Misserfolg: Wille und Konsequenz.", a: "Vince Lombardi" },
+      { q: "Es ist nicht zu spät. Aber es wird mit jedem Monat schwerer, wenn du nichts änderst.", a: "Finanz-Manager" },
+      { q: "Schulden sind wie ein Schneeball: Je länger er rollt, desto größer wird er.", a: "Charles Dickens" }
+    ]
+  },
+  critical: {
+    emoji: '🆘', borderClass: 'bad',
+    label: 'Alarm — Du gibst mehr aus als du verdienst!',
+    pool: [
+      { q: "Wenn deine Ausgaben höher sind als dein Einkommen, ist dein Lebensunterhalt in Gefahr.", a: "Benjamin Franklin" },
+      { q: "Scheitern ist lehrreich — aber wiederholtes Scheitern ohne Änderung ist Selbstsabotage.", a: "Henry Ford" },
+      { q: "Jetzt ist der Moment, alles zu überdenken. Deine Zukunft hängt davon ab.", a: "Finanz-Manager" },
+      { q: "Lebe nicht für heute auf Kosten von morgen.", a: "Warren Buffett" },
+      { q: "Der einzige Weg nach oben: Stoppe die Verluste. Sofort.", a: "Finanz-Manager" }
+    ]
+  }
 };
 
-function showMotivation(status) {
-  const pool = QUOTES[status] || QUOTES.warn;
-  const q = pool[Math.floor(Math.random() * pool.length)];
+function getMotivationLevel(spendPct, savePct, investPct, remaining, income) {
+  if (remaining < 0) return 'critical';
+  if (spendPct > 90) return 'bad';
+  if (spendPct > 80) return 'warning';
+  if (spendPct <= 70 && savePct >= 20 && investPct >= 10) return 'perfect';
+  if (spendPct <= 70 && savePct >= 15) return 'great';
+  if (spendPct <= 75 && savePct >= 10) return 'good';
+  if (spendPct <= 80) return 'okay';
+  return 'warning';
+}
+
+function showMotivation(spendPct, savePct, investPct, remaining, income) {
+  const level = getMotivationLevel(spendPct, savePct, investPct, remaining, income);
+  const data = QUOTES[level];
+  const q = data.pool[Math.floor(Math.random() * data.pool.length)];
   const box = document.getElementById('motivation-box');
-  const emojis = { good: '🏆', warn: '💪', bad: '🔄' };
-  box.className = 'motivation-box ' + status;
-  document.getElementById('motivation-quote').textContent = '„' + q.q + '"';
+  box.className = 'motivation-box ' + data.borderClass;
+  document.getElementById('motivation-quote').textContent = '„' + q.q + '“';
   document.getElementById('motivation-author').textContent = '— ' + q.a;
-  document.getElementById('motivation-emoji').textContent = emojis[status] || '💡';
+  document.getElementById('motivation-emoji').textContent = data.emoji;
+  // Update label
+  let labelEl = document.getElementById('motivation-label');
+  if (!labelEl) {
+    labelEl = document.createElement('div');
+    labelEl.id = 'motivation-label';
+    labelEl.style.cssText = 'font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:8px;';
+    box.insertBefore(labelEl, box.firstChild);
+  }
+  const colors = { good: 'var(--green)', warn: 'var(--amber)', bad: 'var(--red)' };
+  labelEl.style.color = colors[data.borderClass] || 'var(--text-secondary)';
+  labelEl.textContent = data.label;
+}
+
+// ── YEAR SELECT INIT ──
+function initYearSelect() {
+  const sel = document.getElementById('sel-year');
+  if (!sel || sel.options.length > 1) return;
+  const now = new Date();
+  for (let y = now.getFullYear(); y >= now.getFullYear() - 5; y--) {
+    const o = document.createElement('option');
+    o.value = y; o.textContent = y;
+    sel.appendChild(o);
+  }
+}
+
+// ── CHARTS ──
+let _charts = {};
+function destroyChart(id) { if (_charts[id]) { _charts[id].destroy(); delete _charts[id]; } }
+
+function renderCharts() {
+  if (!_history.length) return;
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark' ||
+    (!document.documentElement.getAttribute('data-theme') && window.matchMedia('(prefers-color-scheme:dark)').matches);
+  const textColor = isDark ? '#9a9990' : '#6b6b6b';
+  const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+
+  const last = _history[0];
+  const inv = last.remaining > 0 ? Math.round(last.remaining * 0.33) : 0;
+  const saved = last.remaining > 0 ? (last.remaining - inv) : 0;
+
+  // PIE
+  destroyChart('pie');
+  const pieCtx = document.getElementById('chart-pie');
+  if (pieCtx) {
+    _charts['pie'] = new Chart(pieCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Ausgaben', 'Sparen', 'Investieren'],
+        datasets: [{ data: [last.expenses, Math.max(0,saved), Math.max(0,inv)],
+          backgroundColor: ['#E24B4A','#1D9E75','#534AB7'],
+          borderWidth: 0, hoverOffset: 4 }]
+      },
+      options: { responsive:true, maintainAspectRatio:false, cutout:'65%',
+        plugins: { legend: { position:'bottom', labels:{ color:textColor, font:{size:11}, padding:12 } } }
+      }
+    });
+  }
+
+  // LINE: spend % over time
+  destroyChart('spend');
+  const spendCtx = document.getElementById('chart-spend');
+  if (spendCtx && _history.length >= 1) {
+    const rev = [..._history].reverse();
+    _charts['spend'] = new Chart(spendCtx, {
+      type: 'line',
+      data: {
+        labels: rev.map(h => h.periodLabel || h.label),
+        datasets: [
+          { label: 'Ausgaben %', data: rev.map(h=>h.spendPct), borderColor:'#E24B4A', backgroundColor:'rgba(226,75,74,0.1)', tension:0.4, fill:true, pointRadius:4 },
+          { label: 'Spar %', data: rev.map(h=>h.savePct), borderColor:'#1D9E75', backgroundColor:'rgba(29,158,117,0.08)', tension:0.4, fill:true, pointRadius:4 }
+        ]
+      },
+      options: { responsive:true, maintainAspectRatio:false,
+        scales: {
+          x: { ticks:{color:textColor,font:{size:10}}, grid:{color:gridColor} },
+          y: { ticks:{color:textColor,font:{size:10}, callback:v=>v+'%'}, grid:{color:gridColor}, min:0, max:100 }
+        },
+        plugins: { legend:{ labels:{color:textColor,font:{size:11}} } }
+      }
+    });
+  }
+
+  // BAR: income vs expenses
+  destroyChart('bar');
+  const barCtx = document.getElementById('chart-bar');
+  if (barCtx && _history.length >= 1) {
+    const rev = [..._history].reverse();
+    _charts['bar'] = new Chart(barCtx, {
+      type: 'bar',
+      data: {
+        labels: rev.map(h => h.periodLabel || h.label),
+        datasets: [
+          { label: 'Einkommen', data: rev.map(h=>h.income), backgroundColor:'rgba(83,74,183,0.7)', borderRadius:4 },
+          { label: 'Ausgaben', data: rev.map(h=>h.expenses), backgroundColor:'rgba(226,75,74,0.7)', borderRadius:4 }
+        ]
+      },
+      options: { responsive:true, maintainAspectRatio:false,
+        scales: {
+          x: { ticks:{color:textColor,font:{size:10}}, grid:{color:gridColor} },
+          y: { ticks:{color:textColor,font:{size:10}, callback:v=>'€'+v.toLocaleString('de-DE')}, grid:{color:gridColor} }
+        },
+        plugins: { legend:{ labels:{color:textColor,font:{size:11}} } }
+      }
+    });
+  }
 }
 
 window.calculate = async () => {
   const income=parseFloat(document.getElementById('income').value);
   const expenses=parseFloat(document.getElementById('expenses').value);
-  if(isNaN(income)||isNaN(expenses)||income<=0) return;
+  const errEl = document.getElementById('date-error');
+  errEl.textContent = '';
+
+  if(isNaN(income)||isNaN(expenses)||income<=0) { errEl.textContent='Bitte Einkommen und Ausgaben eingeben.'; return; }
+
+  // Date logic
+  const now = new Date();
+  const selMonth = document.getElementById('sel-month').value;
+  const selYear = document.getElementById('sel-year').value;
+
+  let entryMonth = selMonth ? parseInt(selMonth) : now.getMonth()+1;
+  let entryYear = selYear ? parseInt(selYear) : now.getFullYear();
+
+  // If month given but no year → use current year
+  // Validate: future month/year not allowed
+  const entryDate = new Date(entryYear, entryMonth-1, 1);
+  const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  if (entryDate > currentMonthStart) {
+    errEl.textContent = 'Fehler: Dieser Monat liegt in der Zukunft. Bitte einen vergangenen oder aktuellen Monat wählen.';
+    return;
+  }
+
+  const MONTHS_DE = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+  const periodLabel = MONTHS_DE[entryMonth-1] + ' ' + String(entryYear).slice(2);
+
+  // Timestamp of when user submitted
+  const submittedAt = now.toLocaleString('de-DE', {
+    day:'2-digit', month:'2-digit', year:'numeric',
+    hour:'2-digit', minute:'2-digit', second:'2-digit'
+  });
+
   const remaining=income-expenses;
   const spendPct=Math.round(expenses/income*100);
   const savePct=Math.max(0,Math.round(remaining/income*100));
   const investPct=Math.max(0,Math.round(remaining*0.33/income*100));
   const earned=calcXP(spendPct,savePct,investPct);
   _totalXP+=earned;
-  const now=new Date();
-  const label=now.toLocaleDateString('de-DE',{month:'short',year:'2-digit'});
   const status=spendPct<=70&&savePct>=20?'good':spendPct<=80?'warn':'bad';
   const statusText=status==='good'?'Sehr gut':status==='warn'?'In Ordnung':'Ausbaufähig';
-  _history.unshift({label,income,expenses,remaining,spendPct,savePct,investPct,earned,status,statusText});
-  if(_history.length>12) _history.pop();
-  renderUI(); showMotivation(status); await saveUserData();
+  _history.unshift({periodLabel, label:periodLabel, entryMonth, entryYear, submittedAt, income, expenses, remaining, spendPct, savePct, investPct, earned, status, statusText});
+  if(_history.length>24) _history.pop();
+  renderUI(); showMotivation(spendPct, savePct, investPct, remaining, income); await saveUserData();
 };
 
 window.undoLast = async () => {
