@@ -167,6 +167,13 @@
 
     .hidden { display:none; }
     .empty-state { font-size:13px; color:var(--text-secondary); padding:4px 0; }
+    .motivation-box { border-radius:var(--radius-lg); padding:1.25rem 1.5rem; margin-bottom:12px; border-left:3px solid var(--purple); background:var(--bg); border-top:0.5px solid var(--border); border-right:0.5px solid var(--border); border-bottom:0.5px solid var(--border); position:relative; overflow:hidden; }
+    .motivation-box.good { border-left-color:var(--green-bar); }
+    .motivation-box.warn { border-left-color:var(--amber-bar); }
+    .motivation-box.bad { border-left-color:var(--red-bar); }
+    .motivation-quote { font-size:15px; font-style:italic; color:var(--text); line-height:1.6; margin-bottom:8px; }
+    .motivation-author { font-size:12px; color:var(--text-secondary); font-weight:500; }
+    .motivation-emoji { font-size:28px; position:absolute; right:1.25rem; top:50%; transform:translateY(-50%); opacity:0.15; }
   </style>
 </head>
 <body>
@@ -289,6 +296,12 @@
             <div class="xp-label" id="xp-label">0 Ansehen</div>
           </div>
         </div>
+      </div>
+      <div class="section-title">Motivation</div>
+      <div class="motivation-box" id="motivation-box">
+        <div class="motivation-quote" id="motivation-quote">—</div>
+        <div class="motivation-author" id="motivation-author"></div>
+        <div class="motivation-emoji" id="motivation-emoji"></div>
       </div>
       <div class="section-title">Verlauf</div>
       <div class="card">
@@ -635,6 +648,54 @@ function showToast(msg) {
   setTimeout(()=>t.classList.remove('show'),2000);
 }
 
+
+// ── QUOTES ──
+const QUOTES = {
+  good: [
+    { q: "Der Preis des Erfolgs ist Disziplin, harte Arbeit und Hingabe an das, was du tust.", a: "Vince Lombardi" },
+    { q: "Spare einen Teil von allem, was du verdienst. Zehn Prozent sind nicht zu viel.", a: "George S. Clason" },
+    { q: "Investiere in dich selbst. Dein Wissen zahlt die besten Zinsen.", a: "Benjamin Franklin" },
+    { q: "Wer spart, hat. Wer hat, gewinnt.", a: "Deutsches Sprichwort" },
+    { q: "Der Weg zum Reichtum liegt darin, wenn du willst, Geld zu verdienen, und wenn du es verdient hast, es zu behalten.", a: "Benjamin Franklin" },
+    { q: "Finanzielle Freiheit ist nicht daran gebunden, wie viel du verdienst, sondern wie viel du behältst.", a: "Robert Kiyosaki" },
+    { q: "Kaufe nicht, was du willst. Kaufe, was du brauchst.", a: "Warren Buffett" },
+    { q: "Exzellente Disziplin beim Sparen ist der erste Schritt zu finanziellem Wohlstand.", a: "Suze Orman" },
+    { q: "Die Gewohnheit zu sparen ist selbst eine Erziehung; sie fördert jeden Wert der Sparsamkeit, Ordnung und Planung.", a: "T.T. Munger" },
+    { q: "Großartig! Deine Finanzen sind auf dem richtigen Weg. Bleib konsequent.", a: "Finanz-Manager" }
+  ],
+  warn: [
+    { q: "Jeder Experte war einmal ein Anfänger. Bleib dran.", a: "Helen Hayes" },
+    { q: "Ein Budget sagt uns, was wir uns nicht leisten können, aber es hält uns nicht davon ab, es zu kaufen.", a: "William Feather" },
+    { q: "Es ist nicht dein Gehalt, das dich reich macht. Es sind deine Ausgabegewohnheiten.", a: "Charles A. Jaffe" },
+    { q: "Der größte Feind eines guten Plans ist der Traum vom perfekten Plan.", a: "Carl von Clausewitz" },
+    { q: "Kleine Fortschritte summieren sich zu großen Ergebnissen. Mach weiter.", a: "Finanz-Manager" },
+    { q: "Wer morgen Großes erreichen will, muss heute mit kleinen Schritten beginnen.", a: "Konfuzius" },
+    { q: "Du bist auf dem richtigen Weg. Versuche, deine Ausgaben etwas zu reduzieren.", a: "Finanz-Manager" },
+    { q: "Reichtum ist die Fähigkeit, das wahre Leben zu genießen.", a: "Henry David Thoreau" }
+  ],
+  bad: [
+    { q: "Scheitern ist lehrreich. Jeder der es einmal versucht hat und aufgegeben hat, ist nicht gescheitert – der hat nur aufgehört.", a: "Henry Ford" },
+    { q: "Der Unterschied zwischen einem erfolgreichen Menschen und anderen ist nicht mangelnde Stärke oder Wissen, sondern mangelnder Wille.", a: "Vince Lombardi" },
+    { q: "Wenn du dir kein gutes Leben leisten kannst, kannst du dir auch keinen schlechten Finanzplan leisten.", a: "Warren Buffett" },
+    { q: "Überprüfe deine Ausgaben. Kleine Lecks senken ein großes Schiff.", a: "Benjamin Franklin" },
+    { q: "Der erste Schritt aus dem Loch: Hör auf zu graben.", a: "Warren Buffett" },
+    { q: "Wer nicht spart, wird immer Sklave derer sein, die es tun.", a: "Afrikanisches Sprichwort" },
+    { q: "Schulden sind wie ein Schneeball: Je länger er rollt, desto größer wird er.", a: "Charles Dickens" },
+    { q: "Erkenne die Situation. Jetzt ist die beste Zeit, etwas zu ändern.", a: "Finanz-Manager" }
+  ]
+};
+
+function showMotivation(status) {
+  const pool = QUOTES[status] || QUOTES.warn;
+  const q = pool[Math.floor(Math.random() * pool.length)];
+  const box = document.getElementById('motivation-box');
+  const emojis = { good: '🏆', warn: '💪', bad: '🔄' };
+  box.className = 'motivation-box ' + status;
+  document.getElementById('motivation-quote').textContent = '„' + q.q + '"';
+  document.getElementById('motivation-author').textContent = '— ' + q.a;
+  document.getElementById('motivation-emoji').textContent = emojis[status] || '💡';
+}
+
 window.calculate = async () => {
   const income=parseFloat(document.getElementById('income').value);
   const expenses=parseFloat(document.getElementById('expenses').value);
@@ -651,7 +712,7 @@ window.calculate = async () => {
   const statusText=status==='good'?'Sehr gut':status==='warn'?'In Ordnung':'Ausbaufähig';
   _history.unshift({label,income,expenses,remaining,spendPct,savePct,investPct,earned,status,statusText});
   if(_history.length>12) _history.pop();
-  renderUI(); await saveUserData();
+  renderUI(); showMotivation(status); await saveUserData();
 };
 
 window.undoLast = async () => {
