@@ -1,0 +1,263 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  .page { padding: 1.5rem 0; max-width: 760px; }
+  h1 { font-size: 22px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 4px; }
+  .subtitle { font-size: 14px; color: var(--color-text-secondary); margin-bottom: 1.5rem; }
+  .section-title { font-size: 13px; font-weight: 500; color: var(--color-text-secondary); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 10px; margin-top: 1.5rem; }
+  .card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem; margin-bottom: 12px; }
+  .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .input-group { display: flex; flex-direction: column; gap: 6px; }
+  label { font-size: 13px; color: var(--color-text-secondary); }
+  input[type=number] { width: 100%; padding: 8px 10px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); font-size: 15px; background: var(--color-background-secondary); color: var(--color-text-primary); outline: none; }
+  input[type=number]:focus { border-color: var(--color-border-primary); box-shadow: 0 0 0 2px rgba(0,0,0,0.05); }
+  .btn-row { display: flex; gap: 8px; margin-top: 12px; align-items: center; }
+  .btn { display: inline-block; padding: 9px 20px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); font-size: 14px; cursor: pointer; background: transparent; color: var(--color-text-primary); transition: background 0.15s; }
+  .btn:hover { background: var(--color-background-secondary); }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: var(--color-text-primary); color: var(--color-background-primary); border-color: var(--color-text-primary); }
+  .btn-primary:hover { opacity: 0.85; }
+  .btn-undo { color: #A32D2D; border-color: #F09595; }
+  .btn-undo:hover { background: #FCEBEB; }
+  .btn-undo:disabled { opacity: 0.35; cursor: not-allowed; }
+  .metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 12px; }
+  .metric { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 1rem; }
+  .metric-label { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 4px; }
+  .metric-value { font-size: 22px; font-weight: 500; color: var(--color-text-primary); }
+  .metric-value.good { color: #0F6E56; }
+  .metric-value.warn { color: #BA7517; }
+  .metric-value.bad { color: #A32D2D; }
+  .rule-row { display: grid; grid-template-columns: 80px 1fr 60px 60px; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 0.5px solid var(--color-border-tertiary); }
+  .rule-row:last-child { border-bottom: none; }
+  .rule-label { font-size: 14px; font-weight: 500; color: var(--color-text-primary); }
+  .rule-sub { font-size: 12px; color: var(--color-text-secondary); }
+  .bar-track { height: 8px; background: var(--color-background-secondary); border-radius: 4px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
+  .bar-green { background: #1D9E75; }
+  .bar-amber { background: #EF9F27; }
+  .bar-red { background: #E24B4A; }
+  .pct-val { font-size: 13px; text-align: right; font-weight: 500; }
+  .pct-target { font-size: 11px; color: var(--color-text-secondary); text-align: right; }
+  .ansehen-box { border-radius: var(--border-radius-lg); padding: 1.25rem; border: 0.5px solid var(--color-border-tertiary); background: var(--color-background-primary); display: flex; align-items: center; gap: 1rem; }
+  .title-badge { font-size: 28px; padding: 12px; border-radius: var(--border-radius-md); background: var(--color-background-secondary); min-width: 60px; text-align: center; }
+  .ansehen-title { font-size: 19px; font-weight: 500; color: var(--color-text-primary); }
+  .ansehen-sub { font-size: 13px; color: var(--color-text-secondary); margin-top: 2px; }
+  .xp-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+  .xp-track { flex: 1; height: 10px; background: var(--color-background-secondary); border-radius: 5px; overflow: hidden; }
+  .xp-fill { height: 100%; border-radius: 5px; background: #534AB7; transition: width 0.6s ease; }
+  .xp-label { font-size: 12px; color: var(--color-text-secondary); white-space: nowrap; }
+  .history-row { display: grid; grid-template-columns: 50px 1fr 80px 80px 50px 32px; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 0.5px solid var(--color-border-tertiary); font-size: 13px; }
+  .history-row:last-child { border-bottom: none; }
+  .badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: var(--border-radius-md); }
+  .badge-good { background: #E1F5EE; color: #0F6E56; }
+  .badge-warn { background: #FAEEDA; color: #854F0B; }
+  .badge-bad { background: #FCEBEB; color: #A32D2D; }
+  .del-btn { background: none; border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); cursor: pointer; color: #A32D2D; font-size: 13px; padding: 3px 7px; line-height: 1; }
+  .del-btn:hover { background: #FCEBEB; border-color: #F09595; }
+  .undo-toast { font-size: 12px; color: #0F6E56; margin-left: 8px; opacity: 0; transition: opacity 0.3s; }
+  .undo-toast.show { opacity: 1; }
+  .hidden { display: none; }
+  .empty-state { font-size: 13px; color: var(--color-text-secondary); padding: 8px 0; }
+</style>
+
+<div class="page">
+  <h1>Finanz-Manager</h1>
+  <p class="subtitle">Verwalte deine Finanzen und steigere dein Ansehen durch kluge Entscheidungen.</p>
+
+  <div class="section-title">Monatliche Eingabe</div>
+  <div class="card">
+    <div class="input-row">
+      <div class="input-group">
+        <label>Monatliches Einkommen (€)</label>
+        <input type="number" id="income" placeholder="z.B. 3000" min="0" />
+      </div>
+      <div class="input-group">
+        <label>Monatliche Ausgaben (€)</label>
+        <input type="number" id="expenses" placeholder="z.B. 1800" min="0" />
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="calculate()">Auswerten ↗</button>
+      <button class="btn btn-undo" id="undo-btn" onclick="undoLast()" disabled>↩ Letzten Eintrag rückgängig</button>
+      <span class="undo-toast" id="undo-toast">Eintrag entfernt</span>
+    </div>
+  </div>
+
+  <div id="results" class="hidden">
+    <div class="section-title">Übersicht</div>
+    <div class="metrics">
+      <div class="metric"><div class="metric-label">Einkommen</div><div class="metric-value" id="r-income">—</div></div>
+      <div class="metric"><div class="metric-label">Ausgaben</div><div class="metric-value" id="r-expenses">—</div></div>
+      <div class="metric"><div class="metric-label">Verfügbar</div><div class="metric-value" id="r-remaining">—</div></div>
+    </div>
+
+    <div class="section-title">70 / 20 / 10 Regel</div>
+    <div class="card">
+      <div class="rule-row">
+        <div><div class="rule-label">70%</div><div class="rule-sub">Lebenshaltung</div></div>
+        <div><div class="bar-track"><div class="bar-fill" id="bar-70" style="width:0%"></div></div></div>
+        <div class="pct-val" id="pct-70">—</div>
+        <div class="pct-target">Ziel: 70%</div>
+      </div>
+      <div class="rule-row">
+        <div><div class="rule-label">20%</div><div class="rule-sub">Sparen</div></div>
+        <div><div class="bar-track"><div class="bar-fill" id="bar-20" style="width:0%"></div></div></div>
+        <div class="pct-val" id="pct-20">—</div>
+        <div class="pct-target">Ziel: 20%</div>
+      </div>
+      <div class="rule-row">
+        <div><div class="rule-label">10%</div><div class="rule-sub">Investieren</div></div>
+        <div><div class="bar-track"><div class="bar-fill" id="bar-10" style="width:0%"></div></div></div>
+        <div class="pct-val" id="pct-10">—</div>
+        <div class="pct-target">Ziel: 10%</div>
+      </div>
+    </div>
+
+    <div class="section-title">Dein Ansehen</div>
+    <div class="ansehen-box">
+      <div class="title-badge" id="ansehen-icon">⚪</div>
+      <div style="flex:1;">
+        <div class="ansehen-title" id="ansehen-title">Neuling</div>
+        <div class="ansehen-sub" id="ansehen-desc">Starte deine Finanzreise.</div>
+        <div class="xp-row">
+          <div class="xp-track"><div class="xp-fill" id="xp-bar" style="width:0%"></div></div>
+          <div class="xp-label" id="xp-label">0 Ansehen</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">Verlauf</div>
+    <div class="card">
+      <div id="history-list"><div class="empty-state">Noch keine Einträge.</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const TITLES = [
+  { min: 0,    max: 99,   icon: "⚪", title: "Neuling",          desc: "Die Reise beginnt – noch viel zu lernen." },
+  { min: 100,  max: 249,  icon: "🥉", title: "Lehrling",         desc: "Erste Schritte in Richtung Finanzdisziplin." },
+  { min: 250,  max: 499,  icon: "📋", title: "Haushälter",       desc: "Du weißt, wohin dein Geld fließt." },
+  { min: 500,  max: 799,  icon: "📊", title: "Budgetmeister",    desc: "Solide Grundlagen, respektable Kontrolle." },
+  { min: 800,  max: 1199, icon: "💼", title: "Finanzstratege",   desc: "Dein Geld arbeitet nach Plan." },
+  { min: 1200, max: 1799, icon: "🏛️", title: "Vermögensplaner",  desc: "Weitblick und konsequente Entscheidungen." },
+  { min: 1800, max: 2599, icon: "🌟", title: "Kapitalist",       desc: "Exzellente Kontrolle über deine Finanzen." },
+  { min: 2600, max: 3799, icon: "👑", title: "Finanzfürst",      desc: "Beeindruckende Disziplin und Weitsicht." },
+  { min: 3800, max: 9999, icon: "🏆", title: "Finanzlegende",    desc: "Du hast das Höchste erreicht. Legendärer Status." }
+];
+
+let totalXP = 0;
+let history = [];
+
+function fmt(n) { return n.toLocaleString('de-DE', { maximumFractionDigits: 0 }) + ' €'; }
+
+function getTitle(xp) {
+  return TITLES.find(t => xp >= t.min && xp <= t.max) || TITLES[TITLES.length - 1];
+}
+
+function calcXP(spendPct, savePct, investPct) {
+  let xp = 0;
+  if (spendPct <= 70) xp += 30; else if (spendPct <= 80) xp += 10;
+  if (savePct >= 20) xp += 50; else if (savePct >= 10) xp += 20;
+  if (investPct >= 10) xp += 40; else if (investPct >= 5) xp += 15;
+  return xp;
+}
+
+function setBar(id, pct, target, type) {
+  const fill = document.getElementById(id);
+  const capped = Math.min(pct / target * 100, 100);
+  fill.style.width = capped + '%';
+  if (type === 'spend') fill.className = 'bar-fill ' + (pct <= 70 ? 'bar-green' : 'bar-red');
+  else fill.className = 'bar-fill ' + (pct >= target ? 'bar-green' : (pct >= target * 0.5 ? 'bar-amber' : 'bar-red'));
+}
+
+function renderUI() {
+  if (history.length === 0) {
+    document.getElementById('results').classList.add('hidden');
+    document.getElementById('undo-btn').disabled = true;
+    return;
+  }
+  document.getElementById('results').classList.remove('hidden');
+  document.getElementById('undo-btn').disabled = false;
+
+  const last = history[0];
+  document.getElementById('r-income').textContent = fmt(last.income);
+  document.getElementById('r-expenses').textContent = fmt(last.expenses);
+  const remEl = document.getElementById('r-remaining');
+  remEl.textContent = fmt(last.remaining);
+  remEl.className = 'metric-value ' + (last.remaining >= last.income * 0.3 ? 'good' : last.remaining >= 0 ? 'warn' : 'bad');
+
+  document.getElementById('pct-70').textContent = last.spendPct + '%';
+  document.getElementById('pct-20').textContent = last.savePct + '%';
+  document.getElementById('pct-10').textContent = last.investPct + '%';
+  setBar('bar-70', last.spendPct, 70, 'spend');
+  setBar('bar-20', last.savePct, 20, 'save');
+  setBar('bar-10', last.investPct, 10, 'invest');
+
+  const titleData = getTitle(totalXP);
+  const nextTitle = TITLES.find(t => t.min > totalXP);
+  const xpInLevel = totalXP - titleData.min;
+  const xpNeeded = nextTitle ? nextTitle.min - titleData.min : 1;
+  const xpPct = Math.min(Math.round(xpInLevel / xpNeeded * 100), 100);
+  document.getElementById('ansehen-icon').textContent = titleData.icon;
+  document.getElementById('ansehen-title').textContent = titleData.title;
+  document.getElementById('ansehen-desc').textContent = titleData.desc;
+  document.getElementById('xp-bar').style.width = xpPct + '%';
+  document.getElementById('xp-label').textContent = totalXP + ' Ansehen';
+
+  const list = document.getElementById('history-list');
+  if (history.length === 0) { list.innerHTML = '<div class="empty-state">Noch keine Einträge.</div>'; return; }
+  list.innerHTML = history.map((h, i) => `
+    <div class="history-row">
+      <span style="color:var(--color-text-secondary);">${h.label}</span>
+      <span>${fmt(h.income)} / ${fmt(h.expenses)}</span>
+      <span style="color:var(--color-text-secondary);">${h.spendPct}% | ${h.savePct}%</span>
+      <span class="badge badge-${h.status}">${h.statusText}</span>
+      <span style="font-size:12px;color:#534AB7;">+${h.earned} ✦</span>
+      <button class="del-btn" onclick="deleteEntry(${i})" title="Eintrag löschen">✕</button>
+    </div>
+  `).join('');
+}
+
+function calculate() {
+  const income = parseFloat(document.getElementById('income').value);
+  const expenses = parseFloat(document.getElementById('expenses').value);
+  if (isNaN(income) || isNaN(expenses) || income <= 0) return;
+
+  const remaining = income - expenses;
+  const spendPct = Math.round(expenses / income * 100);
+  const savePct = Math.max(0, Math.round(remaining / income * 100));
+  const investPct = Math.max(0, Math.round((remaining * 0.33) / income * 100));
+  const earned = calcXP(spendPct, savePct, investPct);
+  totalXP += earned;
+
+  const now = new Date();
+  const label = now.toLocaleDateString('de-DE', { month: 'short', year: '2-digit' });
+  const status = spendPct <= 70 && savePct >= 20 ? 'good' : spendPct <= 80 ? 'warn' : 'bad';
+  const statusText = status === 'good' ? 'Sehr gut' : status === 'warn' ? 'In Ordnung' : 'Ausbaufähig';
+
+  history.unshift({ label, income, expenses, remaining, spendPct, savePct, investPct, earned, status, statusText });
+  if (history.length > 6) history.pop();
+  renderUI();
+}
+
+function undoLast() {
+  if (history.length === 0) return;
+  const removed = history.shift();
+  totalXP = Math.max(0, totalXP - removed.earned);
+  renderUI();
+  const toast = document.getElementById('undo-toast');
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+function deleteEntry(index) {
+  const removed = history.splice(index, 1)[0];
+  totalXP = Math.max(0, totalXP - removed.earned);
+  renderUI();
+  const toast = document.getElementById('undo-toast');
+  toast.textContent = 'Eintrag entfernt';
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2000);
+}
+</script>
